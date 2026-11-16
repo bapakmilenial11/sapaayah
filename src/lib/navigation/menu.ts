@@ -1,4 +1,4 @@
-import { PermissionCode, RoleCode } from '@/lib/permissions/constants';
+import { RoleCode, PermissionCode } from '@/lib/permissions/constants';
 import {
   LayoutDashboard,
   Building2,
@@ -13,7 +13,6 @@ import {
   GraduationCap,
   Sparkles,
   ShieldAlert,
-  FolderOpen,
   DollarSign,
   type LucideIcon,
 } from 'lucide-react';
@@ -118,10 +117,10 @@ export const allDashboardMenuItems: DashboardMenuItem[] = [
  * Filter menu navigasi berdasarkan peran dan izin yang dimiliki pengguna aktif
  */
 export function getAuthorizedMenuItems(
-  userRoles: RoleCode[],
-  userPermissions: PermissionCode[]
+  userRoles: RoleCode[] = [],
+  userPermissions: PermissionCode[] = []
 ): DashboardMenuItem[] {
-  const isSuperAdmin = userRoles.includes('super_admin');
+  const isSuperAdmin = Array.isArray(userRoles) && userRoles.includes('super_admin');
 
   return allDashboardMenuItems.filter((item) => {
     // Ringkasan selalu tersedia
@@ -137,10 +136,9 @@ export function getAuthorizedMenuItems(
 
     // Periksa permission jika diperlukan
     if (item.permission) {
-      return userPermissions.includes(item.permission);
+      return Array.isArray(userPermissions) && userPermissions.includes(item.permission);
     }
 
     return true;
   });
 }
-
