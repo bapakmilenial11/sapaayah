@@ -5,6 +5,8 @@ import { getAuthorizedMenuItems } from '@/lib/navigation/menu';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { Bell, User } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

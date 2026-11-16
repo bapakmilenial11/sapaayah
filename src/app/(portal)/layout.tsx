@@ -13,6 +13,8 @@ import {
 import { getCurrentUser } from '@/lib/auth/session';
 import { logoutAction } from '@/features/auth/actions';
 
+export const dynamic = 'force-dynamic';
+
 const portalNav = [
   { label: 'Ringkasan', href: '/portal', icon: Home },
   { label: 'Program Saya', href: '/portal/program-saya', icon: BookOpen },
