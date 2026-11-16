@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
 import { UserProfile } from '@/types';
 import { RoleCode, PermissionCode } from '@/lib/permissions/constants';
+import { cache } from 'react';
 
 /**
  * Mendapatkan data pengguna yang sedang login beserta profil, peran (roles),
  * dan daftar izin (permissions) yang diotorisasi.
- * Menggunakan session pengguna (bukan Service Role Key).
+ * Dibungkus dengan React.cache() untuk memoization per request,
+ * dan menggunakan Promise.all() agar query dieksekusi secara paralel.
  */
-export async function getCurrentUser(): Promise<UserProfile | null> {
+export const getCurrentUser = cache(async (): Promise<UserProfile | null> => {
   const supabase = await createClient();
 
   const {
@@ -19,43 +21,36 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     return null;
   }
 
-  // 1. Ambil data profil
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, full_name, display_name, phone, avatar_path, account_status')
-    .eq('id', user.id)
-    .single();
+  // Eksekusi paralel: Ambil profil dan relasi roles/permissions dalam satu roundtrip
+  const [profileResult, userRolesResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, full_name, display_name, phone, avatar_path, account_status')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('user_roles')
+      .select('role_id, roles(code, role_permissions(permissions(code)))')
+      .eq('user_id', user.id),
+  ]);
 
-  if (profileError || !profile) {
+  const profile = profileResult.data;
+  if (!profile) {
     return null;
   }
 
-  // 2. Ambil peran (roles) pengguna
-  const { data: userRoles } = await supabase
-    .from('user_roles')
-    .select('roles(code)')
-    .eq('user_id', user.id);
-
-  const roles: RoleCode[] = (userRoles || [])
-    .map((ur: any) => ur.roles?.code)
-    .filter(Boolean);
-
-  // 3. Ambil daftar permissions pengguna melalui role_permissions
-  // Menggunakan query berelasi
-  const { data: rolePermissions } = await supabase
-    .from('user_roles')
-    .select('role_id, roles(code), roles!inner(role_permissions(permissions(code)))')
-    .eq('user_id', user.id);
-
+  const rawUserRoles = userRolesResult.data || [];
+  const roles: RoleCode[] = [];
   const permissionSet = new Set<PermissionCode>();
 
-  if (rolePermissions) {
-    for (const ur of rolePermissions as any[]) {
-      const perms = ur.roles?.role_permissions || [];
-      for (const rp of perms) {
-        if (rp.permissions?.code) {
-          permissionSet.add(rp.permissions.code as PermissionCode);
-        }
+  for (const ur of rawUserRoles as any[]) {
+    if (ur.roles?.code) {
+      roles.push(ur.roles.code as RoleCode);
+    }
+    const perms = ur.roles?.role_permissions || [];
+    for (const rp of perms) {
+      if (rp.permissions?.code) {
+        permissionSet.add(rp.permissions.code as PermissionCode);
       }
     }
   }
@@ -70,5 +65,4 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     roles,
     permissions: Array.from(permissionSet),
   };
-}
-
+});

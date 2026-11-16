@@ -73,6 +73,7 @@ export function DashboardNav({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition ${
                   isActive
                     ? 'bg-[#547F9F] text-white font-semibold'
@@ -126,6 +127,7 @@ export function DashboardNav({
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={true}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition ${
                       isActive

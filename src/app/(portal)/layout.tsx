@@ -59,6 +59,7 @@ export default async function PortalLayout({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-[#252D35]/80 hover:bg-[#E8F0F5] hover:text-[#385A75] transition"
               >
                 <Icon className="h-4 w-4 text-[#547F9F]" />
