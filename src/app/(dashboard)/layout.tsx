@@ -14,6 +14,10 @@ export default async function DashboardLayout({
 }) {
   const user = await getCurrentUser();
 
+  if (!user) {
+    redirect('/login');
+  }
+
   // Guard: Hanya role staf/pengurus yang diizinkan mengakses dashboard internal
   const internalRoles = [
     'super_admin',
@@ -26,15 +30,15 @@ export default async function DashboardLayout({
     'relawan',
   ];
 
-  const hasInternalAccess = user?.roles.some((r) => internalRoles.includes(r));
+  const hasInternalAccess = user.roles && user.roles.some((r) => internalRoles.includes(r));
 
-  if (!user || !hasInternalAccess) {
+  if (!hasInternalAccess) {
     redirect('/portal');
   }
 
   // Buat menu terfilter berdasarkan role dan permission user
-  const menuItems = getAuthorizedMenuItems(user.roles, user.permissions);
-  const primaryRole = user.roles[0]?.replace('_', ' ') || 'Staff';
+  const menuItems = getAuthorizedMenuItems(user.roles || [], user.permissions || []);
+  const primaryRole = user.roles?.[0]?.replace('_', ' ') || 'Staff';
 
   return (
     <div className="flex min-h-screen bg-[#F5F7F8]">
