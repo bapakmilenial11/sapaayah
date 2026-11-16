@@ -96,7 +96,28 @@ export async function loginAction(
     };
   }
 
-  const safeRedirect = sanitizeRedirectUrl(rawRedirect, '/portal');
+  // 3. Deteksi Role untuk Smart Redirect:
+  // Jika pengurus/admin -> arahkan ke /dashboard
+  // Jika peserta -> arahkan ke /portal
+  let defaultTarget = '/portal';
+
+  const { data: userRoles } = await supabase
+    .from('user_roles')
+    .select('roles(code)')
+    .eq('user_id', authData.user.id);
+
+  const roleCodes: string[] = (userRoles || []).map((ur: any) => ur.roles?.code).filter(Boolean);
+  const isStaffOrAdmin = roleCodes.some((code) =>
+    ['super_admin', 'ketua', 'pengurus', 'admin_peserta', 'bendahara', 'fasilitator', 'kreator_konten', 'relawan'].includes(code)
+  );
+
+  if (isStaffOrAdmin) {
+    defaultTarget = '/dashboard';
+  }
+
+  // Jika URL rawRedirect spesifik diberikan selain default fallback, prioritaskan
+  const target = rawRedirect && rawRedirect !== '/portal' ? rawRedirect : defaultTarget;
+  const safeRedirect = sanitizeRedirectUrl(target, defaultTarget);
   redirect(safeRedirect);
 }
 

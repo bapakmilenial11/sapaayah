@@ -90,11 +90,26 @@ export default async function PortalLayout({
             Ruang Belajar & Komunitas Peserta
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-medium text-[#385A75]">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E8F0F5] text-[#547F9F]">
-              <User className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            {user?.roles?.some((r) =>
+              ['super_admin', 'ketua', 'pengurus', 'admin_peserta', 'bendahara', 'fasilitator'].includes(r)
+            ) && (
+              <Link
+                href="/dashboard"
+                prefetch={true}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#547F9F] text-white hover:bg-[#385A75] shadow-sm transition"
+              >
+                <span>Buka Dashboard Pengurus</span>
+                <span>&rarr;</span>
+              </Link>
+            )}
+
+            <div className="flex items-center gap-2 text-xs font-medium text-[#385A75]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E8F0F5] text-[#547F9F]">
+                <User className="h-4 w-4" />
+              </div>
+              <span>{user?.fullName || 'Akun Peserta'}</span>
             </div>
-            <span>{user?.fullName || 'Akun Peserta'}</span>
           </div>
         </header>
 
