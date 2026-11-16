@@ -20,8 +20,15 @@ export default async function DashboardOverviewPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const metrics = await getDashboardMetrics(user);
-  const primaryRole = user.roles[0] || 'pengurus';
+  const metrics = await getDashboardMetrics(user).catch(() => ({
+    totalPrograms: 0,
+    totalBatches: 0,
+    totalParticipants: 0,
+    pendingPayments: 0,
+    activeTasks: 0,
+    totalAuditLogs: 0,
+  }));
+  const primaryRole = user.roles?.[0] || 'pengurus';
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
