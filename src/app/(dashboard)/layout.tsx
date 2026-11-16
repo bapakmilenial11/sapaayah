@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { getCurrentUser } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { getAuthorizedMenuItems } from '@/lib/navigation/menu';
@@ -12,13 +11,17 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  let user = null;
+  try {
+    user = await getCurrentUser();
+  } catch (e) {
+    console.error('Failed to get user in DashboardLayout:', e);
+  }
 
   if (!user) {
     redirect('/login');
   }
 
-  // Guard: Hanya role staf/pengurus yang diizinkan mengakses dashboard internal
   const internalRoles = [
     'super_admin',
     'ketua',
@@ -30,22 +33,24 @@ export default async function DashboardLayout({
     'relawan',
   ];
 
-  const hasInternalAccess = user.roles && user.roles.some((r) => internalRoles.includes(r));
+  const userRoles = Array.isArray(user.roles) ? user.roles : [];
+  const userPermissions = Array.isArray(user.permissions) ? user.permissions : [];
+  const hasInternalAccess = userRoles.some((r) => internalRoles.includes(r));
 
   if (!hasInternalAccess) {
     redirect('/portal');
   }
 
-  // Buat menu terfilter berdasarkan role dan permission user
-  const menuItems = getAuthorizedMenuItems(user.roles || [], user.permissions || []);
-  const primaryRole = user.roles?.[0]?.replace('_', ' ') || 'Staff';
+  const menuItems = getAuthorizedMenuItems(userRoles, userPermissions);
+  const primaryRole = userRoles[0]?.replace('_', ' ') || 'Staff';
+  const fullName = user.fullName || 'Pengurus SAPA Ayah';
 
   return (
     <div className="flex min-h-screen bg-[#F5F7F8]">
       {/* Navigasi Responsif (Desktop Sidebar + Mobile Drawer) */}
       <DashboardNav
         menuItems={menuItems}
-        userFullName={user.fullName}
+        userFullName={fullName}
         userRoleName={primaryRole}
       />
 
@@ -70,7 +75,7 @@ export default async function DashboardLayout({
                 <User className="h-4 w-4" />
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-semibold">{user.fullName}</span>
+                <span className="font-semibold">{fullName}</span>
                 <span className="text-[10px] text-[#252D35]/60 capitalize">
                   {primaryRole}
                 </span>
